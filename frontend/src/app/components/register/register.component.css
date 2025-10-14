@@ -1,0 +1,15 @@
+.register-container {
+    max-width: 400px;
+    margin: 60px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+label {
+    display: block;
+    margin: 10px 0;
+}
+button {
+    margin-top: 10px;
+    padding: 8px 16px;
+}

@@ -1,0 +1,34 @@
+<header>
+  <h1>Panel de Usuario</h1>
+  <button (click)="logout()">Cerrar sesión</button>
+</header>
+<section>
+  <h2>Locales disponibles</h2>
+  <div *ngFor="let l of locales" class="locale-card">
+    <h3>{{ l.name }}</h3>
+    <p>{{ l.description }}</p>
+    <p>Capacidad: {{ l.capacity }}</p>
+    <label>
+      Inicio:
+      <input type="datetime-local" #start>
+    </label>
+    <label>
+      Fin:
+      <input type="datetime-local" #end>
+    </label>
+    <label>
+      Motivo:
+      <textarea #motive></textarea>
+    </label>
+    <button (click)="onReserve(l.id, start.value, end.value, motive.value)">Solicitar</button>
+  </div>
+</section>
+<section>
+  <h2>Mis reservas</h2>
+  <div *ngFor="let r of reservations" class="reservation-card">
+    <p><strong>ID:</strong> {{ r.id }}</p>
+    <p><strong>Inicio:</strong> {{ r.start_dt | date:'short' }}</p>
+    <p><strong>Fin:</strong> {{ r.end_dt | date:'short' }}</p>
+    <p><strong>Estado:</strong> {{ r.status }}</p>
+  </div>
+</section>
