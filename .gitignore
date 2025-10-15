@@ -1,0 +1,11 @@
+node_modules
+dist
+out-tsc
+*.log
+*.env
+*.env.local
+.git
+.vscode
+.idea
+.agular
+postgres_data/
