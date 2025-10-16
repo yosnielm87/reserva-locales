@@ -1,5 +1,48 @@
-version: '3.9'
+# version: "3.9"   <-- línea a quitar
+
 services:
   db:
     image: postgres:15
-...
+    container_name: reservas_db
+    restart: always
+    environment:
+      POSTGRES_USER: reservas
+      POSTGRES_PASSWORD: reservas
+      POSTGRES_DB: reservasdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: reservas_api
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    container_name: reservas_web
+    restart: always
+    ports:
+      - "4200:4200"
+    depends_on:
+      - backend
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: reservas_mail
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  postgres_data:
