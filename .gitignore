@@ -1,11 +1,51 @@
-node_modules
-dist
-out-tsc
-*.log
-*.env
-*.env.local
-.git
-.vscode
-.idea
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# Compiled output
+dist/
+tmp/
+out-tsc/
 .angular/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# IDEs and editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Misc
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Backend
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+venv/
+.env
+.env.*
+
+# Local data
 postgres_data/
