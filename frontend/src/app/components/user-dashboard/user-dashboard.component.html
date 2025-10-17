@@ -1,5 +1,6 @@
 <header>
   <h1>Panel de Usuario</h1>
+  <p *ngIf="user$ | async as user">Bienvenido, {{ user.full_name }}</p>
   <button (click)="logout()">Cerrar sesión</button>
 </header>
 <section>

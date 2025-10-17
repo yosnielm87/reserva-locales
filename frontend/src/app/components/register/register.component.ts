@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { tap, switchMap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-register',
@@ -23,19 +24,24 @@ export class RegisterComponent {
 
     onSubmit() {
         if (this.form.invalid) return;
-
         const { fullName, email, password } = this.form.value;
 
-        // 1 objeto en lugar de 3 parámetros sueltos
         this.auth.register({ email: email!, password: password!, full_name: fullName! })
+            .pipe(
+                tap(res => localStorage.setItem('token', res.access_token)),
+                switchMap(() => this.auth.getMe())   // <-- petición que ya sale 200
+            )
             .subscribe({
-                next: res => {
-                    // guardamos el token que YA nos devuelve el backend
-                    localStorage.setItem('token', res.access_token);
-                    alert('Cuenta creada y autenticada');
-                    this.router.navigate(['/']);   // dashboard, home, etc.
+                next: user => {                      // <-- objeto user del backend
+                    console.log('Usuario logueado →', user);
+                    // ⬇️⬇️⬇️  AQUÍ guardas el usuario  ⬇️⬇️⬇️
+                    this.auth.setUser(user);
+                    // ⬆️⬇️  y luego navegas  ⬇️⬆️
+                    this.router.navigate(['/user']);
                 },
                 error: err => alert(err.error.detail || 'Error al registrarse')
-            });
+            }
+        );
     }
+
 }

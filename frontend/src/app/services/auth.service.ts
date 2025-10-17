@@ -1,11 +1,14 @@
 // auth.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+
   private api = 'http://localhost:8000/api/auth';
+  private user$ = new BehaviorSubject<{email: string; full_name: string; role: string} | null>(null);
+
   constructor(private http: HttpClient) {}
 
   login(email: string, password: string): Observable<{ access_token: string }> {
@@ -25,6 +28,10 @@ export class AuthService {
           ('/api/auth/register', dto);
  }
 
+ getMe() {
+    return this.http.get<{email: string, full_name: string, role: string}>('/api/auth/me');
+  }
+
   logout(): void {
     localStorage.removeItem('token');
   }
@@ -37,5 +44,15 @@ export class AuthService {
     if (!this.token) return false;
     const payload = JSON.parse(atob(this.token.split('.')[1]));
     return payload.role === 'admin';
+  }
+
+  setUser(u: {email: string; full_name: string; role: string}) { 
+    this.user$.next(u); 
+  }
+  getUser() { 
+    return this.user$.asObservable(); 
+  }
+  clearUser() { 
+    this.user$.next(null); 
   }
 }

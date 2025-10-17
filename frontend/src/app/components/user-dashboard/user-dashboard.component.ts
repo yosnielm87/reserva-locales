@@ -12,6 +12,7 @@ import { LocaleService } from '../../services/locale.service';
 })
     export class UserDashboardComponent implements OnInit {
         auth = inject(AuthService);
+        user$ = this.auth.getUser();   // Observable con los datos del usuario
         reservationSvc = inject(ReservationService);
         localeSvc = inject(LocaleService);
         locales: any[] = [];
