@@ -4,6 +4,10 @@ from sqlalchemy.future import select
 from ..models import Reservation
 from ..database import async_session
 from ..dependencies import get_current_user
+from ..schemas import ReservationOut
+from ..enums import UserRole, ReservationStatus
+from sqlalchemy.orm import joinedload
+from ..schemas import ReservationWithLocaleOut
 
 router = APIRouter()
 
@@ -46,3 +50,43 @@ async def resolve(reservation_id: str, priority: int, status: str):
         res.status = status
         await session.commit()
     return {"msg": "Resolución guardada"}
+
+@router.get("/reservations/pending", response_model=list[ReservationWithLocaleOut])
+async def pending_reservations(current_user=Depends(get_current_user)):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(403, "No autorizado")
+    async with async_session() as session:
+        stmt = (
+            select(Reservation)
+            .options(joinedload(Reservation.locale))  # ← carga el local
+            .where(Reservation.status == ReservationStatus.pending)
+            .order_by(Reservation.start_dt)
+        )
+        rows = (await session.execute(stmt)).scalars().all()
+
+        # ← armamos el DTO a mano
+        return [
+            {
+                **r.__dict__,
+                "locale_name": r.locale.name
+            }
+            for r in rows
+        ]
+
+
+@router.patch("/reservations/{res_id}/status")
+async def set_reservation_status(
+    res_id: str,
+    status: ReservationStatus,
+    current_user=Depends(get_current_user)
+):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    async with async_session() as session:
+        res = await session.execute(select(Reservation).where(Reservation.id == res_id))
+        reservation = res.scalar_one_or_none()
+        if not reservation:
+            raise HTTPException(status_code=404, detail="Reserva no encontrada")
+        reservation.status = status
+        await session.commit()
+        return {"msg": "Estado actualizado"}

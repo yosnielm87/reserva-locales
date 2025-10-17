@@ -1,7 +1,9 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from uuid import UUID
+from .enums import ReservationStatus   # si quieres restringir valores
 
+# ---------- AUTH ----------
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
@@ -11,6 +13,7 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+# ---------- LOCALES ----------
 class LocaleOut(BaseModel):
     id: UUID
     name: str
@@ -22,8 +25,9 @@ class LocaleOut(BaseModel):
     active: bool
 
     class Config:
-        from_attributes = True
+        from_attributes = True   # V2 (ex-orm_mode)
 
+# ---------- RESERVAS ----------
 class ReservationCreate(BaseModel):
     locale_id: UUID
     start_dt: datetime
@@ -37,9 +41,23 @@ class ReservationOut(BaseModel):
     start_dt: datetime
     end_dt: datetime
     motive: str
+    status: str          # o  status: ReservationStatus
+    priority: int
+
+    class Config:
+        from_attributes = True   # V2
+
+# ➜➜➜  NUEVO: reserva con nombre del local
+class ReservationWithLocaleOut(BaseModel):
+    id: UUID
+    locale_id: UUID
+    locale_name: str          # ← campo extra
+    user_id: UUID
+    start_dt: datetime
+    end_dt: datetime
+    motive: str
     status: str
     priority: int
 
     class Config:
         from_attributes = True
-

@@ -1,26 +1,37 @@
 <header>
   <h1>Panel de Administrador</h1>
+  <p>Bienvenido, {{ (user$ | async)?.full_name || 'Admin' }}</p>
   <button (click)="logout()">Cerrar sesión</button>
 </header>
+
 <section>
-  <h2>Conflictos por solapamiento</h2>
-  <div *ngFor="let c of conflicts" class="conflict-card">
-    <p><strong>Reserva:</strong> {{ c.id }}</p>
-    <p><strong>Local:</strong> {{ c.locale_id }}</p>
-    <p><strong>Usuario:</strong> {{ c.user_id }}</p>
-    <p><strong>Inicio:</strong> {{ c.start_dt | date:'short' }}</p>
-    <p><strong>Fin:</strong> {{ c.end_dt | date:'short' }}</p>
-    <p><strong>Motivo:</strong> {{ c.motive }}</p>
+  <h2>Reservas pendientes</h2>
 
+  <table *ngIf="pending$ | async as list; else noPending">
+    <thead>
+      <tr>
+        <th>Local</th>
+        <th>Inicio</th>
+        <th>Fin</th>
+        <th>Motivo</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of list">
+        <td>{{ r.locale_name }}</td>
+        <td>{{ r.start_dt | date:'short' }}</td>
+        <td>{{ r.end_dt | date:'short' }}</td>
+        <td>{{ r.motive }}</td>
+        <td>
+          <button (click)="approve(r)">Aprobar</button>
+          <button (click)="reject(r)">Rechazar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 
-    <label>
-      Prioridad (1=alta, 9=baja):
-      <input type="number" min="1" max="9" #prio value="5">
-    </label>
-
-    <div class="actions">
-      <button (click)="resolve(c.id, +prio.value, 'approved')">Aprobar</button>
-      <button (click)="resolve(c.id, +prio.value, 'rejected')">Rechazar</button>
-    </div>
-  </div>
+  <ng-template #noPending>
+    <p>No hay reservas pendientes.</p>
+  </ng-template>
 </section>

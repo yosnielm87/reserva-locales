@@ -36,8 +36,13 @@ export class RegisterComponent {
                     console.log('Usuario logueado →', user);
                     // ⬇️⬇️⬇️  AQUÍ guardas el usuario  ⬇️⬇️⬇️
                     this.auth.setUser(user);
-                    // ⬆️⬇️  y luego navegas  ⬇️⬆️
-                    this.router.navigate(['/user']);
+                    
+                    // ⬇️ redirigir según rol ⬇️
+                    if (user.role === 'admin') {
+                        this.router.navigate(['/admin']);
+                    } else {
+                        this.router.navigate(['/user']);
+                    }
                 },
                 error: err => alert(err.error.detail || 'Error al registrarse')
             }
