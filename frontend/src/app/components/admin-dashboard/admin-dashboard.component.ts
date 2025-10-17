@@ -28,17 +28,23 @@ export class AdminDashboardComponent implements OnInit {
 
   /** Aprueba la reserva */
   approve(res: ReservationWithLocale): void {
-    this.adminSvc.setReservationStatus(res.id, 'approved').subscribe(() => {
-      alert('Reserva aprobada');
-      this.reload();
+    this.adminSvc.setReservationStatus(res.id, 'approved').subscribe({
+      next: () => {
+        alert('Reserva aprobada');
+        this.reload();          // recarga la lista
+      },
+      error: () => alert('Error al aprobar')
     });
   }
 
   /** Rechaza la reserva */
   reject(res: ReservationWithLocale): void {
-    this.adminSvc.setReservationStatus(res.id, 'rejected').subscribe(() => {
-      alert('Reserva rechazada');
-      this.reload();
+    this.adminSvc.setReservationStatus(res.id, 'rejected').subscribe({
+      next: () => {
+        alert('Reserva rechazada');
+        this.reload();
+      },
+      error: () => alert('Error al rechazar')
     });
   }
 
