@@ -1,13 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from ..models import Reservation
 from ..database import async_session
 from ..dependencies import get_current_user
-from ..schemas import ReservationOut
+from ..schemas import ReservationOut, ReservationWithLocaleOut, ReservationStatusUpdate
 from ..enums import UserRole, ReservationStatus
 from sqlalchemy.orm import joinedload
-from ..schemas import ReservationWithLocaleOut
 
 router = APIRouter()
 
@@ -73,20 +72,31 @@ async def pending_reservations(current_user=Depends(get_current_user)):
             for r in rows
         ]
 
-
-@router.patch("/reservations/{res_id}/status")
+@router.patch("/reservations/{res_id}/status", response_model=ReservationOut)
 async def set_reservation_status(
     res_id: str,
-    status: ReservationStatus,
+    # Se recomienda renombrar el parámetro para evitar confusión.
+    # Lo llamaremos 'status_update' para indicar que es el objeto Pydantic.
+    status_update: ReservationStatusUpdate,  
     current_user=Depends(get_current_user)
 ):
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="No autorizado")
+        
+    # Extraemos el valor del Enum del objeto Pydantic
+    new_status_value = status_update.status 
+
     async with async_session() as session:
         res = await session.execute(select(Reservation).where(Reservation.id == res_id))
         reservation = res.scalar_one_or_none()
+        
         if not reservation:
             raise HTTPException(status_code=404, detail="Reserva no encontrada")
-        reservation.status = status
+            
+        # 🛠️ CORRECCIÓN CLAVE: Asignamos el valor extraído (new_status_value), 
+        # que es un objeto Enum, no el modelo Pydantic completo.
+        reservation.status = new_status_value 
+        
         await session.commit()
-        return {"msg": "Estado actualizado"}
+        await session.refresh(reservation)
+        return reservation

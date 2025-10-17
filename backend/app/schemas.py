@@ -1,3 +1,4 @@
+#backend/app/schemas.py
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from uuid import UUID
@@ -34,6 +35,11 @@ class ReservationCreate(BaseModel):
     end_dt: datetime
     motive: str
 
+class ReservationStatusUpdate(BaseModel):
+    """Modelo para recibir el cuerpo JSON en la ruta PATCH de status."""
+    # Esto espera el JSON: {"status": "approved"}
+    status: ReservationStatus
+
 class ReservationOut(BaseModel):
     id: UUID
     locale_id: UUID
@@ -61,3 +67,4 @@ class ReservationWithLocaleOut(BaseModel):
 
     class Config:
         from_attributes = True
+
