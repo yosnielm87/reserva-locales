@@ -65,7 +65,7 @@
         </div>
         <!-- Mostrar slots ocupados para contexto (opcional) -->
         <details>
-            <summary>Horarios Ocupados ({{ availability?.occupied_slots.length || 0 }})</summary>
+            <summary>Horarios Ocupados ({{ availability?.occupied_slots?.length || 0 }})</summary>
             <ul class="occupied-list">
                 <li *ngFor="let slot of availability?.occupied_slots">
                     {{ slot.start_dt | date:'shortTime' }} - {{ slot.end_dt | date:'shortTime' }}
