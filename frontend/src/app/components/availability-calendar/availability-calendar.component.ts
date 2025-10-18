@@ -1,16 +1,19 @@
-// src/app/components/availability-calendar/availability-calendar.component.ts
-
 import { Component, OnInit, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common'; // Agregué DatePipe por si acaso
 import { FormsModule } from '@angular/forms';
 
 import { LocaleService } from '../../services/locale.service';
-import { AvailabilityResponse, TimeSlot } from '../../models/availability.model';
+import { AvailabilityResponse, TimeRange, ReservationDisplay } from '../../models/availability.model';
+
+// Definimos el tipo enriquecido para la visualización en el calendario
+type CalendarSlot = (ReservationDisplay | TimeRange) & { type: 'available' | 'occupied' };
+
 
 @Component({
   selector: 'app-availability-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  // Agregué DatePipe
+  imports: [CommonModule, FormsModule, DatePipe], 
   templateUrl: './availability-calendar.component.html',
   styleUrls: ['./availability-calendar.component.scss']
 })
@@ -27,6 +30,10 @@ export class AvailabilityCalendarComponent implements OnInit {
     if (this.localeId) this.fetchAvailability();
   }
 
+  onDateChange(): void {
+    this.fetchAvailability();
+  }
+
   fetchAvailability(): void {
     if (!this.localeId || !this.selectedDate) return;
 
@@ -35,8 +42,8 @@ export class AvailabilityCalendarComponent implements OnInit {
       .subscribe({
         next: (body: any) => {
           this.availability = {
-            occupied_slots: (body.occupied_slots as TimeSlot[]) || [],
-            available_slots: (body.available_slots as TimeSlot[]) || []
+            occupied_slots: (body.occupied_slots as ReservationDisplay[]) || [],
+            available_slots: (body.available_slots as TimeRange[]) || []
           };
           this.loading = false;
         },
@@ -47,18 +54,24 @@ export class AvailabilityCalendarComponent implements OnInit {
       });
   }
 
-
   /* Helper tipado: devuelve slots enriquecidos y ordenados por hora */
-  get allSlots(): (TimeSlot & { type: 'available' | 'occupied' })[] {
+  get allSlots(): CalendarSlot[] {
     if (!this.availability) return [];
 
     const available = this.availability.available_slots
-      .map((slot: TimeSlot) => ({ ...slot, type: 'available' as const }));
+      .map((slot: TimeRange) => ({ ...slot, type: 'available' as const }));
+    
     const occupied = this.availability.occupied_slots
-      .map((slot: TimeSlot) => ({ ...slot, type: 'occupied' as const }));
+      .map((slot: ReservationDisplay) => ({ ...slot, type: 'occupied' as const }));
 
     return [...available, ...occupied].sort(
       (a, b) => new Date(a.start_dt).getTime() - new Date(b.start_dt).getTime()
     );
+  }
+    
+  // NUEVO HELPER para acceder al estado de forma segura y sin casting complejo en el HTML
+  getSlotStatus(slot: CalendarSlot): string {
+    // Utilizamos la propiedad 'type' para asegurarnos de que solo devolvemos 'status' si es ocupado
+    return slot.type === 'occupied' ? (slot as ReservationDisplay).status : '';
   }
 }

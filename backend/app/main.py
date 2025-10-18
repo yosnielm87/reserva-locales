@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from .routers import auth, locales, reservations, admin
 
 load_dotenv()
-print("DB_URL:", os.getenv("DATABASE_URL"))   # ← línea de depuración (opcional)
 
 # 3.  Crear la app
 app = FastAPI(title="Reserva Locales API", version="1.0.0")

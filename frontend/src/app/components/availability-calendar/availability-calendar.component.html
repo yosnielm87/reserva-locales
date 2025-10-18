@@ -1,32 +1,37 @@
-<h2>Disponibilidad del Local</h2>
+<div class="availability-calendar">
+    <h3>Disponibilidad del Local</h3>
 
-<input type="date" [(ngModel)]="selectedDate" (change)="fetchAvailability()">
+    <div class="date-selector">
+        <label for="date-input">Seleccionar Fecha:</label>
+        <!-- (ngModelChange) llama a la función onDateChange() para recargar la disponibilidad -->
+        <input type="date" id="date-input" [(ngModel)]="selectedDate" (ngModelChange)="onDateChange()">
+    </div>
 
-<div *ngIf="loading">Cargando disponibilidad...</div>
+    <div *ngIf="loading" class="loading-indicator">Cargando disponibilidad...</div>
 
-<div *ngIf="availability && !loading">
-  <h3>Horarios para {{ selectedDate }}</h3>
-  
-  <ul *ngIf="allSlots.length > 0; else noSlots">
-    <li 
-      *ngFor="let slot of allSlots" 
-      [ngClass]="{'available-slot': slot.type === 'available', 'occupied-slot': slot.type === 'occupied'}"
-    >
-      {{ slot.start_dt | date:'HH:mm' }} - {{ slot.end_dt | date:'HH:mm' }} 
-      <span class="status-badge" [ngClass]="slot.type">{{ slot.type === 'available' ? 'LIBRE' : 'OCUPADO' }}</span>
-      
-      <button *ngIf="slot.type === 'available'">Reservar</button>
-    </li>
-  </ul>
+    <div *ngIf="!loading && allSlots.length === 0" class="no-data">
+        No se encontró disponibilidad para la fecha seleccionada.
+    </div>
 
-  <ng-template #noSlots>
-    <p>No hay horarios disponibles ni ocupados para el día seleccionado.</p>
-  </ng-template>
+    <div *ngIf="!loading && allSlots.length > 0" class="slots-container">
+        <h4>Horarios Ordenados:</h4>
+        <!-- Itera sobre todos los slots (disponibles y ocupados) -->
+        <div *ngFor="let slot of allSlots" 
+             class="slot-item" 
+             [class.available]="slot.type === 'available'" 
+             [class.occupied]="slot.type === 'occupied'">
+            
+            <div class="time-range">
+                {{ slot.start_dt | date:'shortTime' }} - {{ slot.end_dt | date:'shortTime' }}
+            </div>
+            
+            <div class="status">
+                <span *ngIf="slot.type === 'available'">LIBRE</span>
+                <!-- Llama a la función getSlotStatus del TS para obtener el estado de forma segura -->
+                <span *ngIf="slot.type === 'occupied'">
+                    OCUPADO ({{ getSlotStatus(slot) | uppercase }})
+                </span>
+            </div>
+        </div>
+    </div>
 </div>
-
-<style>
-  .available-slot { border-left: 5px solid green; padding-left: 10px; }
-  .occupied-slot { border-left: 5px solid red; padding-left: 10px; opacity: 0.7; }
-  .status-badge.available { background-color: green; color: white; padding: 2px 5px; border-radius: 3px; font-size: 0.8em;}
-  .status-badge.occupied { background-color: red; color: white; padding: 2px 5px; border-radius: 3px; font-size: 0.8em;}
-</style>
