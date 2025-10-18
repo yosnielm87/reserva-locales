@@ -68,3 +68,14 @@ class ReservationWithLocaleOut(BaseModel):
     class Config:
         from_attributes = True
 
+# Esquema para representar un periodo de tiempo (ocupado o disponible)
+class TimeSlot(BaseModel):
+    start_dt: datetime
+    end_dt: datetime
+    
+# Esquema de Respuesta para la Disponibilidad
+class AvailabilityResponse(BaseModel):
+    # Los horarios ocupados (reservas confirmadas o pendientes)
+    occupied_slots: list[TimeSlot]
+    # Los horarios que el local está abierto pero no reservado
+    available_slots: list[TimeSlot]

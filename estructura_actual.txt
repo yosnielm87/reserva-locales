@@ -1,0 +1,70 @@
+reserva-locales/
+├── .env.example
+├── README.md
+├── check_password.py
+├── docker-compose.yml
+├── estructura_actual.txt
+├── tree_code.py
+├── backend/
+│   ├── requirements.txt
+│   ├── test_db.py
+│   └── app/
+│       ├── database.py
+│       ├── dependencies.py
+│       ├── enums.py
+│       ├── init.py
+│       ├── main.py
+│       ├── models.py
+│       ├── schemas.py
+│       └── routers/
+│           ├── admin.py
+│           ├── auth.py
+│           ├── locales.py
+│           └── reservations.py
+├── db/
+│   └── init.sql
+├── envs/
+└── frontend/
+    ├── angular.json
+    ├── package-lock.json
+    ├── package.json
+    ├── proxy.conf.json
+    ├── tsconfig.app.json
+    ├── tsconfig.json
+    ├── tsconfig.spec.json
+    └── src/
+        ├── index.html
+        ├── main.ts
+        ├── styles.css
+        └── app/
+            ├── app.component.ts
+            ├── app.config.ts
+            ├── app.routes.ts
+            ├── styles.css
+            ├── components/
+            │   ├── admin-dashboard/
+            │   │   ├── admin-dashboard.component.css
+            │   │   ├── admin-dashboard.component.html
+            │   │   └── admin-dashboard.component.ts
+            │   ├── login/
+            │   │   ├── login.component.css
+            │   │   ├── login.component.html
+            │   │   └── login.component.ts
+            │   ├── register/
+            │   │   ├── register.component.css
+            │   │   ├── register.component.html
+            │   │   └── register.component.ts
+            │   └── user-dashboard/
+            │       ├── user-dashboard.component.css
+            │       ├── user-dashboard.component.html
+            │       └── user-dashboard.component.ts
+            ├── guards/
+            │   ├── admin.guard.ts
+            │   └── auth.guard.ts
+            ├── interceptors/
+            │   └── auth.interceptor.ts
+            └── services/
+                ├── admin.service.ts
+                ├── auth.service.ts
+                ├── locale.service.ts
+                └── reservation.service.ts

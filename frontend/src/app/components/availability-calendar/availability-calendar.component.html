@@ -1,0 +1,32 @@
+<h2>Disponibilidad del Local</h2>
+
+<input type="date" [(ngModel)]="selectedDate" (change)="fetchAvailability()">
+
+<div *ngIf="loading">Cargando disponibilidad...</div>
+
+<div *ngIf="availability && !loading">
+  <h3>Horarios para {{ selectedDate }}</h3>
+  
+  <ul *ngIf="allSlots.length > 0; else noSlots">
+    <li 
+      *ngFor="let slot of allSlots" 
+      [ngClass]="{'available-slot': slot.type === 'available', 'occupied-slot': slot.type === 'occupied'}"
+    >
+      {{ slot.start_dt | date:'HH:mm' }} - {{ slot.end_dt | date:'HH:mm' }} 
+      <span class="status-badge" [ngClass]="slot.type">{{ slot.type === 'available' ? 'LIBRE' : 'OCUPADO' }}</span>
+      
+      <button *ngIf="slot.type === 'available'">Reservar</button>
+    </li>
+  </ul>
+
+  <ng-template #noSlots>
+    <p>No hay horarios disponibles ni ocupados para el día seleccionado.</p>
+  </ng-template>
+</div>
+
+<style>
+  .available-slot { border-left: 5px solid green; padding-left: 10px; }
+  .occupied-slot { border-left: 5px solid red; padding-left: 10px; opacity: 0.7; }
+  .status-badge.available { background-color: green; color: white; padding: 2px 5px; border-radius: 3px; font-size: 0.8em;}
+  .status-badge.occupied { background-color: red; color: white; padding: 2px 5px; border-radius: 3px; font-size: 0.8em;}
+</style>

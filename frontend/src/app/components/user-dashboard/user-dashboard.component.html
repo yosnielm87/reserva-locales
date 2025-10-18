@@ -1,35 +1,86 @@
 <header>
-  <h1>Panel de Usuario</h1>
-  <p *ngIf="user$ | async as user">Bienvenido, {{ user.full_name }}</p>
-  <button (click)="logout()">Cerrar sesión</button>
+  <h1>Panel de Usuario</h1>
+  <p *ngIf="user$ | async as user">Bienvenido, {{ user.full_name }}</p>
+  <button (click)="logout()">Cerrar sesión</button>
 </header>
+
 <section>
-  <h2>Locales disponibles</h2>
-  <div *ngFor="let l of locales" class="locale-card">
-    <h3>{{ l.name }}</h3>
-    <p>{{ l.description }}</p>
-    <p>Capacidad: {{ l.capacity }}</p>
-    <label>
-      Inicio:
-      <input type="datetime-local" #start>
-    </label>
-    <label>
-      Fin:
-      <input type="datetime-local" #end>
-    </label>
-    <label>
-      Motivo:
-      <textarea #motive></textarea>
-    </label>
-    <button (click)="onReserve(l.id, start.value, end.value, motive.value)">Solicitar</button>
+  <h2>Locales disponibles</h2>
+
+  <!-- Selector de Fecha Global para la consulta -->
+  <div class="search-controls">
+    <label for="date-select">Consultar Disponibilidad en Fecha:</label>
+    <!-- [(ngModel)] enlaza searchDate en el TS -->
+    <input type="date" id="date-select" [(ngModel)]="searchDate">
   </div>
+  
+  <div *ngFor="let l of locales" class="locale-card">
+    <h3>{{ l.name }}</h3>
+    <p>{{ l.description }}</p>
+    <p>Capacidad: {{ l.capacity }}</p>
+    
+    <!-- 1. BOTÓN PARA ACTIVAR LA CONSULTA -->
+    <button (click)="checkAvailability(l.id)">
+        Ver Horarios Libres para {{ searchDate }}
+    </button>
+
+    <!-- 2. PANEL DE DISPONIBILIDAD (Solo visible si es el local seleccionado) -->
+    <div *ngIf="selectedLocaleId === l.id" class="availability-panel">
+        <hr>
+        <h4>Disponibilidad:</h4>
+        
+        <div *ngIf="loadingAvailability">Cargando horarios...</div>
+        
+        <div *ngIf="availability && !loadingAvailability">
+            
+            <p *ngIf="availability.available_slots.length === 0">🚫 No hay horarios libres este día.</p>
+            
+            <!-- LISTA DE SLOTS DISPONIBLES -->
+            <ul class="slot-list">
+                <li *ngFor="let slot of availability.available_slots"
+                    [class.selected-slot]="selectedSlot && selectedSlot.start_dt === slot.start_dt"
+                    (click)="selectedSlot = slot"
+                >
+                    {{ slot.start_dt | date:'shortTime' }} - {{ slot.end_dt | date:'shortTime' }}
+                </li>
+            </ul>
+
+            <!-- 3. FORMULARIO DE RESERVA FINAL (Solo visible si hay un slot seleccionado) -->
+            <div *ngIf="selectedSlot" class="reservation-form">
+                <h5>Confirmar Reserva:</h5>
+                <p class="selected-time">De: {{ selectedSlot.start_dt | date:'shortTime' }} a {{ selectedSlot.end_dt | date:'shortTime' }}</p>
+
+                <label>
+                    Motivo:
+                    <!-- [(ngModel)] enlaza motiveInput en el TS -->
+                    <textarea [(ngModel)]="motiveInput" placeholder="Describe brevemente el motivo de la reserva..."></textarea>
+                </label>
+                
+                <!-- 4. BOTÓN DE SOLICITUD (llama a la función con los datos del slot) -->
+                <button (click)="onReserve(l.id)">
+                    Solicitar Reserva
+                </button>
+                <button (click)="selectedSlot = null">Cancelar Selección</button>
+            </div>
+        </div>
+        <!-- Mostrar slots ocupados para contexto (opcional) -->
+        <details>
+            <summary>Horarios Ocupados ({{ availability?.occupied_slots.length || 0 }})</summary>
+            <ul class="occupied-list">
+                <li *ngFor="let slot of availability?.occupied_slots">
+                    {{ slot.start_dt | date:'shortTime' }} - {{ slot.end_dt | date:'shortTime' }}
+                </li>
+            </ul>
+        </details>
+    </div>
+  </div>
 </section>
 <section>
-  <h2>Mis reservas</h2>
-  <div *ngFor="let r of reservations" class="reservation-card">
-    <p><strong>ID:</strong> {{ r.id }}</p>
-    <p><strong>Inicio:</strong> {{ r.start_dt | date:'short' }}</p>
-    <p><strong>Fin:</strong> {{ r.end_dt | date:'short' }}</p>
-    <p><strong>Estado:</strong> {{ r.status }}</p>
-  </div>
+  <h2>Mis reservas</h2>
+  <div *ngFor="let r of reservations" class="reservation-card">
+    <p><strong>ID:</strong> {{ r.id }}</p>
+    <p><strong>Inicio:</strong> {{ r.start_dt | date:'short' }}</p>
+    <p><strong>Fin:</strong> {{ r.end_dt | date:'short' }}</p>
+    <p><strong>Estado:</strong> {{ r.status }}</p>
+  </div>
 </section>
