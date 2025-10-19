@@ -25,6 +25,7 @@ class LocaleOut(BaseModel):
     open_time: str
     close_time: str
     active: bool
+    imagen_url: str
 
     class Config:
         from_attributes = True   # V2 (ex-orm_mode)

@@ -45,8 +45,9 @@ class Locale(Base):
     open_time = Column(String)
     close_time = Column(String)
     active = Column(Boolean, default=True)
+    imagen = Column(String, nullable=True)
 
-    # ⬇️ 4 espacios exactos ⬇️
+    # ⬇️⬇️  Relación inversa  ⬇️⬇️
     reservations = relationship("Reservation", back_populates="locale")
 
 class Reservation(Base):

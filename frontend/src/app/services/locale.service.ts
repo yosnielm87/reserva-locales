@@ -19,7 +19,7 @@ export class LocaleService {
     constructor(private http: HttpClient) { }
 
     list(): Observable<any[]> {
-        return this.http.get<any[]>(this.api);
+        return this.http.get<any[]>('http://localhost:8000/api/locales');
     }
 
     /**

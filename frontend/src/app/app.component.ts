@@ -1,60 +1,71 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Observable } from 'rxjs';
 import { LoginComponent } from './components/login/login.component';
 import { AuthService } from './services/auth.service';
+import { LocaleService } from './services/locale.service'; // <-- tu servicio
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, LoginComponent, CommonModule],
-  styles: [`
-    .banner{
-      position:relative;
-      height:300px;
-      background:url('/assets/img/banner.jpg') center/cover no-repeat;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:#fff;
-    }
-    .banner::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,.45);}
-    .banner-content{position:relative;z-index:1;text-align:center;}
-    .top-right{position:absolute;top:15px;right:30px;z-index:2;display:flex;gap:8px;align-items:center;}
-    .top-right span{font-weight:500;}
-    .top-right button{padding:4px 10px;border:none;border-radius:3px;background:#ff9800;color:#fff;cursor:pointer;}
-  `],
+  styleUrls: ['./app.component.css'],
   template: `
     <header class="banner">
       <div class="top-right">
-        <!-- Sin loguear → login inline -->
         <app-login *ngIf="(auth.user$ | async) === null" [styleInline]="true"></app-login>
-
-        <!-- Logueado → bienvenida + cerrar sesión -->
         <ng-container *ngIf="auth.user$ | async as user">
           <span>Hola, {{ user.full_name }}</span>
           <button (click)="logout()">Cerrar sesión</button>
         </ng-container>
       </div>
-
       <div class="banner-content">
         <h1>Reserva de Locales</h1>
         <p>Gestioná tus espacios de forma rápida y sencilla</p>
       </div>
     </header>
 
-    <router-outlet></router-outlet>
+    <!-- Panel de locales (solo logueado) -->
+    <div class="layout">
+      <aside class="sidebar" *ngIf="auth.user$ | async">
+        <h3>Locales</h3>
+        <div class="local-card" *ngFor="let l of locales$ | async">
+          <strong>{{ l.name }}</strong>
+
+          <img [src]="l.imagen_url"
+              [alt]="l.name"
+              onerror="this.src='/assets/img/no-image.jpg'">
+
+          <div class="info">
+            <p>{{ l.description }}</p>
+            <small>Capacidad: {{ l.capacity }} personas</small>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Contenido de la página -->
+      <main class="content">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
   `
 })
 export class AppComponent implements OnInit {
-  constructor(public auth: AuthService) {}
+  locales$!: Observable<any[]>; // <-- locales
+
+  constructor(
+    public auth: AuthService,
+    private localeSvc: LocaleService // <-- tu servicio
+  ) { }
 
   ngOnInit() {
-    this.auth.initSession().subscribe(); // recupera usuario si hay token
+    this.auth.initSession().subscribe(); // recupera usuario
+    this.locales$ = this.localeSvc.list(); // carga todos los locales
   }
 
   logout() {
     this.auth.logout();
-    window.location.reload(); // recarga y vuelve a mostrar login
+    window.location.reload();
   }
 }

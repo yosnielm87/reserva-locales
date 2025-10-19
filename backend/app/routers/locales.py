@@ -35,6 +35,7 @@ async def list_locales(session: AsyncSession = Depends(get_async_session)):
             # Asumo que los campos open_time y close_time son objetos time o string que necesitan formato
             "open_time": row.open_time.strftime("%H:%M") if isinstance(row.open_time, time) else str(row.open_time),
             "close_time": row.close_time.strftime("%H:%M") if isinstance(row.close_time, time) else str(row.close_time),
+            "imagen_url": f"/assets/locales/{row.imagen}"
         }
         for row in db_rows
     ]
