@@ -124,11 +124,17 @@
           <span class="status-badge"
                 [class.approved]="r.status === 'approved'"
                 [class.pending]="r.status === 'pending'"
-                [class.rejected]="r.status === 'rejected'">
+                [class.rejected]="r.status === 'rejected'"
+                [class.cancelled]="r.status === 'cancelled'">
             {{ r.status | uppercase }}
           </span>
         </div>
-        <button (click)="cancel(r.id)">Cancelar</button>
+        <!-- Botón de Cancelar: visible solo si el estado es pendiente o aprobado -->
+                <button *ngIf="r.status === 'pending' || r.status === 'approved'"
+                        (click)="cancel(r.id)"
+                        class="py-2 px-4 bg-red-500 text-white font-semibold rounded-lg shadow hover:bg-red-600 transition duration-150 ease-in-out">
+                  Cancelar
+                </button>
       </div>
     </div>
 

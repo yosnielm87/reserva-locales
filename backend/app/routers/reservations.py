@@ -127,3 +127,31 @@ async def my_history(
     )
     res = await session.execute(stmt)
     return res.scalars().all()
+
+@router.delete("/{reservation_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def cancel_reservation(
+    reservation_id: str,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_async_session)
+):
+    # 1. Verificar que la reserva existe y pertenece al usuario
+    stmt = select(Reservation).where(
+        Reservation.id == reservation_id,
+        Reservation.user_id == current_user.id
+    )
+    res = await session.execute(stmt)
+    reservation = res.scalar_one_or_none()
+
+    if not reservation:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada o no autorizada")
+
+    # 2. (Opcional) no permitir cancelar si ya pasó la fecha
+    if reservation.start_dt < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="No se puede cancelar una reserva pasada")
+
+    # 3. Marcar como cancelada (o eliminar, según tu lógica)
+    reservation.status = "cancelled"
+    await session.commit()
+
+    # 204 No Content → Angular no espera cuerpo
+    return None
