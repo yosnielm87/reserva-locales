@@ -1,49 +1,37 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-/* ---------- interfaces ---------- */
-export interface Reservation {
-  id: string;
-  locale_id: string;
-  user_id: string;
-  start_dt: string;
-  end_dt: string;
-  motive: string;
-  status: 'pending' | 'approved' | 'rejected';
-  priority?: number;
-}
-
-export interface ReservationCreate {
-  locale_id: string;
-  start_dt: string;
-  end_dt: string;
-  motive: string;
-}
-
-/** ➜ Nueva interfaz: incluye el nombre del local */
-export interface ReservationWithLocale extends Reservation {
-  locale_name: string;
-}
+import { ReservationCreate, ReservationOut, ReservationWithLocale } from '../models/reservation.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReservationService {
   private readonly api = 'http://localhost:8000/api/reservations';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
-  /** Crear una reserva */
-  create(data: ReservationCreate): Observable<Reservation> {
-    return this.http.post<Reservation>(this.api, data);
+  create(data: ReservationCreate): Observable<ReservationOut> {
+    return this.http.post<ReservationOut>(this.api, data);
   }
 
-  /** Listar reservas del usuario logueado */
-  myReservations(): Observable<Reservation[]> {
-    return this.http.get<Reservation[]>(`${this.api}/my`);
+  myReservations(): Observable<ReservationOut[]> {
+    return this.http.get<ReservationOut[]>(`${this.api}/my`);
   }
 
-  /** ➜ Listar reservas PENDIENTES con nombre de local (para admin) */
   getPendingWithLocale(): Observable<ReservationWithLocale[]> {
     return this.http.get<ReservationWithLocale[]>(`${this.api}/admin/reservations/pending`);
+  }
+
+  upcoming(userId: string): Observable<ReservationOut[]> {
+    // usamos /my que YA existe y filtra por fecha
+    return this.http.get<ReservationOut[]>(`${this.api}/my`);
+  }
+
+  history(userId: string): Observable<ReservationOut[]> {
+    // si querés histórico, creá /my/history o filtrá del mismo /my
+    return this.http.get<ReservationOut[]>(`${this.api}/my/history`);
+  }
+
+  cancel(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.api}/${id}`);
   }
 }

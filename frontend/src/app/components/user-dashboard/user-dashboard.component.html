@@ -1,190 +1,165 @@
-<header>
-    <h1>Panel de Usuario</h1>
-    <!--p *ngIf="user$ | async as user">Bienvenido, {{ user.full_name }}</p>
-    <button (click)="logout()">Cerrar sesión</button-->
-</header>
+<div class="dashboard">
+  <!-- Tabs -->
+  <nav class="tabs">
+    <button [class.active]="activeTab === 'new'"
+            (click)="activeTab = 'new'">Nueva Reserva</button>
+    <button [class.active]="activeTab === 'upcoming'"
+            (click)="activeTab = 'upcoming'">Reservas Futuras</button>
+    <button [class.active]="activeTab === 'history'"
+            (click)="activeTab = 'history'">Historial</button>
+  </nav>
 
-<section>
-    <h2>Locales disponibles</h2>
+  <!-- Contenido -->
+  <div class="tab-content">
 
-    <div class="search-controls">
+    <!-- 1. NUEVA RESERVA -->
+    <div *ngIf="activeTab === 'new'" class="tab-panel">
+      <h2>Locales disponibles</h2>
+
+      <div class="search-controls">
         <label for="date-select">Consultar Disponibilidad en Fecha:</label>
         <input type="date" id="date-select" [(ngModel)]="searchDate">
-    </div>
+      </div>
 
-    <div *ngFor="let l of locales" class="locale-card">
-        <h3>{{ l.name }}</h3>
-        <p>{{ l.description }}</p>
-        <p>Capacidad: {{ l.capacity }}</p>
+      <div *ngFor="let l of locales" class="locale-card">
+        <img [src]="l.imagen_url" [alt]="l.name"
+             onerror="this.src='/assets/img/no-image.jpg'">
+        <div class="info">
+          <strong>{{ l.name }}</strong>
+          <p>{{ l.description }}</p>
+          <p>Capacidad: {{ l.capacity }}</p>
+        </div>
 
         <button (click)="checkAvailability(l.id)">
-            Ver Horarios Libres para {{ searchDate }}
+          Ver Horarios Libres para {{ searchDate }}
         </button>
 
-        <div *ngIf="selectedLocaleId === l.id && reservationMessage"
-            [class.success]="!reservationMessage.startsWith('Fallo')"
-            [class.error]="reservationMessage.startsWith('Fallo')" class="message">
-            {{ reservationMessage }}
-        </div>
-
+        <!-- Disponibilidad -->
         <div *ngIf="selectedLocaleId === l.id" class="availability-panel">
-            <hr>
-            <h4>Bloques Continuos Disponibles:</h4>
+          <div *ngIf="loadingAvailability" class="loading">Cargando horarios...</div>
 
-            <div *ngIf="loadingAvailability">Cargando horarios...</div>
+          <div *ngIf="availability && !loadingAvailability">
+            <p *ngIf="availability.available_slots.length === 0">🚫 No hay bloques libres este día.</p>
 
-            <div *ngIf="availability && !loadingAvailability">
+            <ul class="slot-list">
+              <li *ngFor="let block of availability.available_slots"
+                  [class.selected-slot]="selectedBlock?.start_dt === block.start_dt"
+                  (click)="selectBlock(block)">
+                {{ block.start_dt | date:'shortTime' }} - {{ block.end_dt | date:'shortTime' }}
+              </li>
+            </ul>
 
-                <p *ngIf="availability.available_slots.length === 0">🚫 No hay bloques libres este día.</p>
+            <!-- Formulario de reserva -->
+            <div *ngIf="selectedBlock" class="reservation-form">
+              <h4>Reservar Rango Personalizado</h4>
+              <p class="selected-time">
+                Máx. Rango: {{ selectedBlock.start_dt | date:'shortTime' }} -
+                {{ selectedBlock.end_dt | date:'shortTime' }}
+              </p>
 
-                <ul class="slot-list">
-                    <li *ngFor="let block of availability.available_slots"
-                        [class.selected-slot]="selectedBlock && selectedBlock.start_dt === block.start_dt"
-                        (click)="selectBlock(block)">
-                        {{ block.start_dt | date:'shortTime' }} - {{ block.end_dt | date:'shortTime' }} (Bloque
-                        continuo)
-                    </li>
-                </ul>
+              <div class="time-inputs">
+                <label>Inicio
+                  <input type="datetime-local" [(ngModel)]="reservationStart"
+                         [min]="getDateTimeLocalString(selectedBlock.start_dt)"
+                         [max]="getDateTimeLocalString(selectedBlock.end_dt)">
+                </label>
+                <label>Fin
+                  <input type="datetime-local" [(ngModel)]="reservationEnd"
+                         [min]="reservationStart"
+                         [max]="getDateTimeLocalString(selectedBlock.end_dt)">
+                </label>
+              </div>
 
-                <div *ngIf="selectedBlock" class="reservation-form">
-                    <h5>Reservar Rango de Tiempo Personalizado:</h5>
-                    <p class="selected-time">
-                        Máx. Rango: {{ selectedBlock.start_dt | date:'shortTime' }} a {{ selectedBlock.end_dt |
-                        date:'shortTime' }}
-                    </p>
+              <label>Motivo
+                <textarea [(ngModel)]="motiveInput"
+                          placeholder="Describe brevemente el motivo..."></textarea>
+              </label>
 
-                    <div class="time-inputs">
-                        <label for="start-time">Hora de Inicio:</label>
-                        <input type="datetime-local" id="start-time" [(ngModel)]="reservationStart"
-                            [min]="getDateTimeLocalString(selectedBlock.start_dt)"
-                            [max]="getDateTimeLocalString(selectedBlock.end_dt)">
+              <button (click)="onReserve(l.id)"
+                      [disabled]="!isReservationValid()">Solicitar Reserva</button>
+              <button (click)="selectedBlock = null">Cancelar</button>
 
-                        <label for="end-time">Hora de Fin:</label>
-                        <input type="datetime-local" id="end-time" [(ngModel)]="reservationEnd" [min]="reservationStart"
-                            [max]="getDateTimeLocalString(selectedBlock.end_dt)">
-                    </div>
-
-                    <p class="validation-message" *ngIf="selectedBlock && !isReservationValid()">
-                        * El rango de tiempo seleccionado debe estar dentro del bloque y ser válido.
-                    </p>
-
-                    <label>
-                        Motivo:
-                        <textarea [(ngModel)]="motiveInput"
-                            placeholder="Describe brevemente el motivo de la reserva..."></textarea>
-                    </label>
-
-                    <button (click)="onReserve(l.id)" [disabled]="!isReservationValid()">
-                        Solicitar Reserva (PENDIENTE - Permite Solapamiento)
-                    </button>
-                    <button (click)="selectedBlock = null">Cancelar Selección</button>
-                </div>
+              <p *ngIf="!isReservationValid()" class="validation-message">
+                El rango debe estar dentro del bloque y ser válido.
+              </p>
             </div>
-            <details>
-                <summary>Horarios Ocupados ({{ availability?.occupied_slots?.length || 0 }})</summary>
-                <ul class="occupied-list">
-                    <li *ngFor="let slot of availability?.occupied_slots">
-                        {{ slot.start_dt | date:'shortTime' }} - {{ slot.end_dt | date:'shortTime' }}
-                        <span class="status-indicator" [class.status-pending]="slot.status === 'pending'"
-                            [class.status-approved]="slot.status === 'approved'">({{ slot.status }})</span>
-                    </li>
-                </ul>
-            </details>
+          </div>
+
+          <details>
+            <summary>Horarios Ocupados ({{ availability?.occupied_slots?.length || 0 }})</summary>
+            <ul class="occupied-list">
+              <li *ngFor="let slot of availability?.occupied_slots">
+                {{ slot.start_dt | date:'shortTime' }} - {{ slot.end_dt | date:'shortTime' }}
+                <span class="status-indicator"
+                      [class.status-pending]="slot.status === 'pending'"
+                      [class.status-approved]="slot.status === 'approved'">
+                  {{ slot.status }}
+                </span>
+              </li>
+            </ul>
+          </details>
         </div>
+      </div>
     </div>
-</section>
-<section>
-    <h2>Mis reservas</h2>
-    <div *ngFor="let r of reservations" class="reservation-card">
-        <p><strong>ID:</strong> {{ r.id | slice:0:8 }}...</p>
-        <p *ngIf="r.locale_name"><strong>Local:</strong> {{ r.locale_name }}</p>
-        <p><strong>Fecha/Hora:</strong> {{ r.start_dt | date:'short' }} - {{ r.end_dt | date:'shortTime' }}</p>
-        <p class="status-indicator" [class.status-approved]="r.status === 'approved'"
-            [class.status-pending]="r.status === 'pending'">
-            <strong>Estado:</strong> {{ r.status | uppercase }}
-        </p>
+
+    <!-- 2. RESERVAS FUTURAS -->
+    <div *ngIf="activeTab === 'upcoming'" class="tab-panel">
+      <h2>Próximas Reservas</h2>
+
+      <div *ngIf="(upcoming$ | async)!.length === 0" class="empty">
+        No tienes reservas futuras.
+      </div>
+
+      <div class="reservation-card"
+           *ngFor="let r of upcoming$ | async">
+        <img [src]="getLocaleImage(r.locale_id)"
+             [alt]="getLocaleName(r.locale_id)"
+             onerror="this.src='/assets/img/no-image.jpg'">
+        <div class="info">
+          <strong>{{ getLocaleName(r.locale_id) }}</strong>
+          <p>{{ r.start_dt | date:'shortDate' }} ·
+             {{ r.start_dt | date:'shortTime' }} -
+             {{ r.end_dt | date:'shortTime' }}</p>
+          <!-- Badge dinámico -->
+          <span class="status-badge"
+                [class.approved]="r.status === 'approved'"
+                [class.pending]="r.status === 'pending'"
+                [class.rejected]="r.status === 'rejected'">
+            {{ r.status | uppercase }}
+          </span>
+        </div>
+        <button (click)="cancel(r.id)">Cancelar</button>
+      </div>
     </div>
-</section>
 
-<style>
-    .message.success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-        padding: 10px;
-        margin-top: 10px;
-        border-radius: 5px;
-    }
+    <!-- 3. HISTORIAL -->
+    <div *ngIf="activeTab === 'history'" class="tab-panel">
+      <h2>Historial de Reservas</h2>
 
-    .message.error {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-        padding: 10px;
-        margin-top: 10px;
-        border-radius: 5px;
-    }
+      <div *ngIf="(history$ | async)!.length === 0" class="empty">
+        Sin reservas anteriores.
+      </div>
 
-    .slot-list li {
-        padding: 8px;
-        border-radius: 4px;
-        cursor: pointer;
-        margin-bottom: 4px;
-        border: 1px solid #ccc;
-        transition: background-color 0.2s;
-    }
+      <div class="reservation-card"
+           *ngFor="let r of history$ | async">
+        <img [src]="getLocaleImage(r.locale_id)"
+             [alt]="getLocaleName(r.locale_id)"
+             onerror="this.src='/assets/img/no-image.jpg'">
+        <div class="info">
+          <strong>{{ getLocaleName(r.locale_id) }}</strong>
+          <p>{{ r.start_dt | date:'shortDate' }} ·
+             {{ r.start_dt | date:'shortTime' }} -
+             {{ r.end_dt | date:'shortTime' }}</p>
+          <!-- Badge dinámico -->
+          <span class="status-badge"
+                [class.approved]="r.status === 'approved'"
+                [class.cancelled]="r.status === 'cancelled'"
+                [class.rejected]="r.status === 'rejected'">
+            {{ r.status | uppercase }}
+          </span>
+        </div>
+      </div>
+    </div>
 
-    .slot-list li:hover {
-        background-color: #f0f0f0;
-    }
-
-    .slot-list li.selected-slot {
-        background-color: #e0f7fa;
-        /* Azul claro */
-        border-color: #00bcd4;
-        font-weight: bold;
-    }
-
-    .time-inputs label {
-        display: block;
-        margin-top: 10px;
-    }
-
-    .time-inputs input {
-        display: block;
-        margin-bottom: 5px;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-    }
-
-    .status-indicator {
-        font-weight: bold;
-        padding: 4px 8px;
-        border-radius: 4px;
-        display: inline-block;
-        font-size: 0.85em;
-    }
-
-    .status-pending {
-        background-color: #ffeb3b;
-        /* Amarillo */
-        color: #333;
-    }
-
-    .status-approved {
-        background-color: #4caf50;
-        /* Verde */
-        color: white;
-    }
-
-    .validation-message {
-        color: #721c24;
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        padding: 5px;
-        border-radius: 4px;
-        font-size: 0.9em;
-        margin-bottom: 10px;
-    }
-</style>
+  </div>
+</div>

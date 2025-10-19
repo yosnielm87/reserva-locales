@@ -5,77 +5,84 @@ import { AuthService } from '../../services/auth.service';
 import { ReservationService } from '../../services/reservation.service';
 import { LocaleService } from '../../services/locale.service';
 
-// Importaciones de modelos actualizados (asumiendo que los modelos fueron modificados)
-import { AvailabilityResponse, TimeRange, ReservationDisplay } from '../../models/availability.model';
-import { ReservationCreate } from '../../models/reservation.model';
+// Interfaces (ajustá la ruta si las tenés en otro archivo)
+export interface TimeRange {
+  start_dt: string;
+  end_dt: string;
+}
+
+export interface AvailabilityResponse {
+  available_slots: TimeRange[];
+  occupied_slots: any[];
+}
+
+export interface ReservationCreate {
+  locale_id: string;
+  start_dt: string;
+  end_dt: string;
+  motive: string;
+}
 
 @Component({
   selector: 'app-user-dashboard',
   standalone: true,
-  // Agregamos DatePipe para su uso en el template
-  imports: [CommonModule, FormsModule, DatePipe], 
+  imports: [CommonModule, FormsModule, DatePipe],
   templateUrl: './user-dashboard.component.html',
   styleUrls: ['./user-dashboard.component.css']
 })
 export class UserDashboardComponent implements OnInit {
 
+  /* ---------- Servicios ---------- */
   private auth = inject(AuthService);
   private reservationSvc = inject(ReservationService);
   private localeSvc = inject(LocaleService);
 
-  /* ---------- usuario ---------- */
+  /* ---------- Usuario ---------- */
   user$ = this.auth.getUser();
-  private get userSnap() { return (this.auth as any)['user$'].value; }
+  private get userSnap() { return (this.auth as any)['user$']?.value; }
 
-  /* ---------- datos base ---------- */
+  /* ---------- Tabs ---------- */
+  activeTab: 'new' | 'upcoming' | 'history' = 'new';
+
+  /* ---------- Datos base ---------- */
   locales: any[] = [];
-  // Usamos ReservationDisplay[] que incluye status
-  reservations: ReservationDisplay[] = []; 
+  upcoming$ = this.reservationSvc.upcoming(this.userSnap?.id ?? '');
+  history$ = this.reservationSvc.history(this.userSnap?.id ?? '');
 
-  /* ---------- Lógica de Disponibilidad ---------- */
-  selectedLocaleId: string | null = null;
-  // Inicializamos la fecha con hoy en formato YYYY-MM-DD para el input[type=date]
+  /* ---------- Nueva Reserva ---------- */
   searchDate: string = new Date().toISOString().substring(0, 10);
+  selectedLocaleId: string | null = null;
   availability: AvailabilityResponse | null = null;
-  loadingAvailability: boolean = false;
-  reservationMessage: string = '';
-
-  // Bloque continuo seleccionado por el usuario (Tipo: TimeRange)
+  loadingAvailability = false;
+  reservationMessage = '';
   selectedBlock: TimeRange | null = null;
-  motiveInput: string = '';
-  // Horas exactas que el usuario selecciona dentro del bloque (para input[type=datetime-local])
-  reservationStart: string = '';
-  reservationEnd: string = '';
+  motiveInput = '';
+  reservationStart = '';
+  reservationEnd = '';
 
   ngOnInit(): void {
-    if (!this.userSnap) {
-      this.auth.initSession().subscribe();
-    }
-    this.loadData();
+    if (!this.userSnap) this.auth.initSession().subscribe();
+    this.loadLocales();
   }
 
-  loadData(): void {
+  loadLocales(): void {
     this.localeSvc.list().subscribe(data => this.locales = data);
-    // Aseguramos que las reservas cargadas tengan el status
-    this.reservationSvc.myReservations().subscribe((data: any) => this.reservations = data);
   }
 
-  // Consultar la disponibilidad de un local para la fecha seleccionada
+  /* ---------- Lógica de Disponibilidad ---------- */
   checkAvailability(localeId: string): void {
     this.selectedLocaleId = localeId;
-    this.selectedBlock = null; // Reiniciar selección de bloque
+    this.selectedBlock = null;
     this.availability = null;
     this.loadingAvailability = true;
     this.reservationMessage = '';
 
     this.localeSvc.getAvailability(localeId, this.searchDate).subscribe({
       next: (data) => {
-        // Casteo explícito a la nueva estructura de AvailabilityResponse
         this.availability = data as unknown as AvailabilityResponse;
         this.loadingAvailability = false;
       },
       error: (err) => {
-        alert('Error al obtener disponibilidad. Revise la consola.');
         console.error(err);
         this.loadingAvailability = false;
         this.availability = null;
@@ -83,99 +90,77 @@ export class UserDashboardComponent implements OnInit {
     });
   }
 
-  // 1. Selecciona el bloque continuo y precarga las horas de inicio/fin
   selectBlock(block: TimeRange): void {
-      this.selectedBlock = block;
-      this.reservationMessage = '';
-
-      // Inicializar el tiempo de reserva con el inicio del bloque
-      this.reservationStart = this.getDateTimeLocalString(block.start_dt);
-      
-      // Inicializar el tiempo de fin con 1 hora después del inicio (o el final del bloque si es más corto)
-      const defaultEnd = new Date(new Date(block.start_dt).getTime() + 60 * 60 * 1000);
-      const blockEnd = new Date(block.end_dt);
-      
-      const initialEnd = (defaultEnd <= blockEnd ? defaultEnd : blockEnd);
-      this.reservationEnd = this.getDateTimeLocalString(initialEnd.toISOString());
+    this.selectedBlock = block;
+    this.reservationMessage = '';
+    // Precarga horas por defecto
+    this.reservationStart = this.getDateTimeLocalString(block.start_dt);
+    const defaultEnd = new Date(new Date(block.start_dt).getTime() + 60 * 60 * 1000);
+    const blockEnd = new Date(block.end_dt);
+    const initialEnd = defaultEnd <= blockEnd ? defaultEnd : blockEnd;
+    this.reservationEnd = this.getDateTimeLocalString(initialEnd.toISOString());
   }
 
-  // 2. Validación de la reserva (asegura que esté dentro del bloque y que sea válida)
   isReservationValid(): boolean {
-      if (!this.selectedBlock || !this.reservationStart || !this.reservationEnd) return false;
-      
-      const start = new Date(this.reservationStart);
-      const end = new Date(this.reservationEnd);
-      const minBlock = new Date(this.selectedBlock.start_dt);
-      const maxBlock = new Date(this.selectedBlock.end_dt);
-
-      // 1. Fin debe ser posterior a inicio y con duración mínima (ej: 30 minutos)
-      if (end <= start || (end.getTime() - start.getTime()) < 30 * 60 * 1000) return false;
-      
-      // 2. Debe estar dentro del bloque continuo seleccionado
-      // Usamos getTime() para comparación precisa
-      if (start.getTime() < minBlock.getTime() || end.getTime() > maxBlock.getTime()) return false;
-      
-      return true;
+    if (!this.selectedBlock || !this.reservationStart || !this.reservationEnd) return false;
+    const start = new Date(this.reservationStart);
+    const end = new Date(this.reservationEnd);
+    const minBlock = new Date(this.selectedBlock.start_dt);
+    const maxBlock = new Date(this.selectedBlock.end_dt);
+    return (
+      end > start &&
+      (end.getTime() - start.getTime()) >= 30 * 60 * 1000 &&
+      start >= minBlock &&
+      end <= maxBlock
+    );
   }
-  
-  // 3. Crea la reserva usando las horas personalizadas y motivo
+
   onReserve(localeId: string): void {
-    const motive = this.motiveInput.trim();
-    if (!this.isReservationValid()) {
-      alert('Error de validación: Las horas seleccionadas no son válidas o no están dentro del bloque continuo seleccionado.');
+    if (!this.isReservationValid() || !this.motiveInput.trim()) {
+      alert('Completa todos los campos y asegúrate de que el rango sea válido.');
       return;
     }
-    if (!motive) {
-      alert('Error: El motivo de la reserva es obligatorio.');
-      return;
-    }
-    
-    // Importante: Convertir las horas locales del input a formato ISO (UTC) para el backend
-    // Al crear un new Date() con el string datetime-local, el navegador lo interpreta en la zona local, 
-    // y toISOString() lo convierte a UTC.
-    const startIso = new Date(this.reservationStart).toISOString();
-    const endIso = new Date(this.reservationEnd).toISOString();
-
-    const reservationPayload: ReservationCreate = {
+    const payload: ReservationCreate = {
       locale_id: localeId,
-      start_dt: startIso,
-      end_dt: endIso,
-      motive: motive
+      start_dt: new Date(this.reservationStart).toISOString(),
+      end_dt: new Date(this.reservationEnd).toISOString(),
+      motive: this.motiveInput.trim()
     };
-    
-    this.reservationMessage = 'Enviando solicitud...';
 
-    this.reservationSvc.create(reservationPayload)
-      .subscribe({
-        next: () => {
-          this.reservationMessage = '¡Reserva solicitada! Se permite solapamiento, por lo que su estado es PENDIENTE de aprobación del administrador.';
-          this.loadData(); // recargar listados (incluyendo la nueva reserva PENDIENTE en 'Mis reservas')
-          this.checkAvailability(localeId); // Recargar disponibilidad para el local actual
-          this.selectedBlock = null; // Limpiar selección
-          this.motiveInput = ''; // Limpiar motivo
-        },
-        error: (err) => {
-          const detail = err.error?.detail || 'Error desconocido al solicitar la reserva.';
-          this.reservationMessage = `Fallo en la reserva: ${detail}`;
-          console.error(err);
-        }
-      });
+    this.reservationMessage = 'Enviando solicitud...';
+    this.reservationSvc.create(payload).subscribe({
+      next: () => {
+        this.reservationMessage = '¡Reserva solicitada! Estado: PENDIENTE.';
+        this.motiveInput = '';
+        this.selectedBlock = null;
+        this.loadLocales();          // recarga lista
+        this.upcoming$ = this.reservationSvc.upcoming(this.userSnap?.id ?? '');
+      },
+      error: (err) => {
+        this.reservationMessage = `Fallo: ${err.error?.detail || 'Error desconocido'}`;
+      }
+    });
   }
-  
-  // Helper para convertir ISO UTC a string compatible con input[datetime-local]
-  // Necesario para mostrar la hora en la zona horaria local del navegador.
-  getDateTimeLocalString(isoString: string): string {
-    const date = new Date(isoString);
-    const y = date.getFullYear();
-    const m = (date.getMonth() + 1).toString().padStart(2, '0');
-    const d = date.getDate().toString().padStart(2, '0');
-    const h = date.getHours().toString().padStart(2, '0');
-    const mi = date.getMinutes().toString().padStart(2, '0');
-    return `${y}-${m}-${d}T${h}:${mi}`;
+
+  cancel(reservationId: string): void {
+    this.reservationSvc.cancel(reservationId).subscribe(() => {
+      this.upcoming$ = this.reservationSvc.upcoming(this.userSnap?.id ?? '');
+    });
   }
-    
-  logout(): void {
-    this.auth.logout();
-    window.location.href = '/login';
+
+  /* ---------- Helper ---------- */
+  getDateTimeLocalString(iso: string): string {
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${('0' + (d.getMonth() + 1)).slice(-2)}-${('0' + d.getDate()).slice(-2)}T${('0' + d.getHours()).slice(-2)}:${('0' + d.getMinutes()).slice(-2)}`;
   }
+
+  getLocaleName(id: string): string {
+    return this.locales.find(l => l.id === id)?.name || 'Local desconocido';
+  }
+
+  getLocaleImage(localeId: string): string {
+    const loc = this.locales.find(l => l.id === localeId);
+    return loc?.imagen_url || '/assets/img/no-image.jpg';
+  }
+
 }

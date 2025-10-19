@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { AdminService } from '../../services/admin.service';
-import { ReservationWithLocale } from '../../services/reservation.service'; // ← importamos el tipo
+import { ReservationWithLocale } from '../../models/reservation.model';
 
 @Component({
   selector: 'app-admin-dashboard',

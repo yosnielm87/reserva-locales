@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+#from sqlalchemy.future import select, desc
+from sqlalchemy import select, desc
 from datetime import datetime, time, timedelta
 # Asegúrate de que los modelos y esquemas están correctamente importados
 from ..models import Reservation, Locale, ReservationStatus 
 from ..schemas import ReservationCreate, ReservationOut
 # Asumo que get_async_session reemplaza async_session en las dependencias
 from ..dependencies import get_current_user, get_async_session 
-# Asumo que get_async_session está definido, si no, usa async_session:
 # from ..database import async_session 
 
 router = APIRouter(
@@ -92,14 +92,38 @@ async def create_reservation(
 # 📚 OBTENER MIS RESERVAS
 # ====================================================================
 
+from datetime import datetime
+
 @router.get("/my", response_model=list[ReservationOut])
 async def my_reservations(
     current_user=Depends(get_current_user),
     session: AsyncSession = Depends(get_async_session)
 ):
-    """Obtiene todas las reservas realizadas por el usuario autenticado."""
-    # Nota: Tu código original usaba async_session() as session, lo cambié a dependencia
-    res = await session.execute(
-        select(Reservation).where(Reservation.user_id == current_user.id)
+    """Reservas del usuario a partir de hoy (futuras)."""
+    stmt = (
+        select(Reservation)
+        .where(
+            Reservation.user_id == current_user.id,
+            Reservation.start_dt >= datetime.utcnow()
+        )
+        .order_by(Reservation.start_dt)
     )
+    res = await session.execute(stmt)
+    return res.scalars().all()
+
+@router.get("/my/history", response_model=list[ReservationOut])
+async def my_history(
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Reservas PASADAS del usuario autenticado."""
+    stmt = (
+        select(Reservation)
+        .where(
+            Reservation.user_id == current_user.id,
+            Reservation.start_dt < datetime.utcnow()
+        )
+        .order_by(desc(Reservation.start_dt))  # más reciente primero
+    )
+    res = await session.execute(stmt)
     return res.scalars().all()
