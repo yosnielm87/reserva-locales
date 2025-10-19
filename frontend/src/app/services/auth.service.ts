@@ -10,7 +10,7 @@ export class AuthService {
   private readonly api = 'http://localhost:8000/api/auth';
   private readonly http = inject(HttpClient);
 
-  private user$ = new BehaviorSubject<{email: string; full_name: string; role: string} | null>(null);
+  user$ = new BehaviorSubject<{email: string; full_name: string; role: string} | null>(null);
 
   /* ---------- API calls ---------- */
   login(email: string, password: string): Observable<{ access_token: string }> {

@@ -11,10 +11,15 @@ export interface ReservationDisplay extends TimeRange {
   status: 'pending' | 'approved' | 'rejected' | string;
   // Puedes añadir locale_name si se recibe al listar las propias reservas
   locale_name?: string;
+
+  // 🛠️ CAMBIOS NECESARIOS: Campos añadidos desde el backend
+  user: string; // Email del usuario que realizó la reserva
+  status_color: 'yellow' | 'green' | 'gray'; // Indicador de color para el frontend
+  display_text?: string; // (Opcional) Texto enriquecido ya preparado por el backend
 }
 
 export interface AvailabilityResponse {
-  // Los slots ocupados ahora incluyen el ID y el estado de la reserva
+  // Los slots ocupados ahora incluyen el ID y el estado de la reserva, MÁS los nuevos campos.
   occupied_slots: ReservationDisplay[];
   // Los slots disponibles siguen siendo TimeRange (bloques continuos)
   available_slots: TimeRange[];

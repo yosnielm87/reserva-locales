@@ -1,8 +1,8 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common'; // Agregué DatePipe por si acaso
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
 import { LocaleService } from '../../services/locale.service';
+// Asumo que estos modelos están definidos correctamente:
 import { AvailabilityResponse, TimeRange, ReservationDisplay } from '../../models/availability.model';
 
 // Definimos el tipo enriquecido para la visualización en el calendario
@@ -12,10 +12,9 @@ type CalendarSlot = (ReservationDisplay | TimeRange) & { type: 'available' | 'oc
 @Component({
   selector: 'app-availability-calendar',
   standalone: true,
-  // Agregué DatePipe
   imports: [CommonModule, FormsModule, DatePipe], 
   templateUrl: './availability-calendar.component.html',
-  styleUrls: ['./availability-calendar.component.scss']
+  styleUrls: ['./availability-calendar.component.css']
 })
 export class AvailabilityCalendarComponent implements OnInit {
 
@@ -54,7 +53,6 @@ export class AvailabilityCalendarComponent implements OnInit {
       });
   }
 
-  /* Helper tipado: devuelve slots enriquecidos y ordenados por hora */
   get allSlots(): CalendarSlot[] {
     if (!this.availability) return [];
 
@@ -69,9 +67,33 @@ export class AvailabilityCalendarComponent implements OnInit {
     );
   }
     
-  // NUEVO HELPER para acceder al estado de forma segura y sin casting complejo en el HTML
-  getSlotStatus(slot: CalendarSlot): string {
-    // Utilizamos la propiedad 'type' para asegurarnos de que solo devolvemos 'status' si es ocupado
-    return slot.type === 'occupied' ? (slot as ReservationDisplay).status : '';
+  // 🛠️ NUEVO HELPER para obtener el color (Amarillo/Verde)
+  getSlotColor(slot: CalendarSlot): string {
+    if (slot.type === 'occupied') {
+      const occupiedSlot = slot as ReservationDisplay;
+      return occupiedSlot.status_color === 'green' ? 'var(--color-green-indicator)' : 'var(--color-yellow-indicator)';
+    }
+    return 'transparent'; // Para slots disponibles
+  }
+
+  // 🛠️ NUEVO HELPER para obtener la información detallada (Estado + Usuario)
+  getSlotDetails(slot: CalendarSlot): string {
+    if (slot.type === 'occupied') {
+      const occupiedSlot = slot as ReservationDisplay;
+      const statusText = occupiedSlot.status.toUpperCase();
+      return `${statusText} (${occupiedSlot.user})`;
+    }
+    return 'LIBRE';
+  }
+    
+  // 🛠️ FUNCIÓN FALTANTE QUE CAUSA EL ERROR TS2339
+  getSlotBgClass(slot: CalendarSlot): string {
+      if (slot.type === 'occupied') {
+          const occupiedSlot = slot as ReservationDisplay;
+          // Devuelve la clase SCSS (status-green o status-yellow) basada en el backend
+          return occupiedSlot.status_color === 'green' ? 'status-green' : 'status-yellow';
+      }
+      // Para slots disponibles, devolvemos 'slot-available' (o puedes devolver '')
+      return 'slot-available';
   }
 }

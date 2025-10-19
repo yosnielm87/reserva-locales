@@ -4,31 +4,34 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ReactiveFormsModule } from '@angular/forms';
 import { inject } from '@angular/core';
+import { Input } from '@angular/core';  
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'app-login',
     standalone: true,
-    imports: [ReactiveFormsModule],
+    imports: [ReactiveFormsModule, CommonModule],
     templateUrl: './login.component.html',
     styleUrls: ['./login.component.css']
-    })
-    export class LoginComponent {
+})
+export class LoginComponent {
+    @Input() styleInline = false;
     fb = inject(FormBuilder);
     auth = inject(AuthService);
     router = inject(Router);
     form = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required]
+        email: ['', [Validators.required, Validators.email]],
+        password: ['', Validators.required]
     });
     onSubmit() {
-    if (this.form.invalid) return;
-    const { email, password } = this.form.value;
-    this.auth.login(email!, password!).subscribe({
-    next: () => {
-    if (this.auth.isAdmin()) this.router.navigate(['/admin']);
-    else this.router.navigate(['/user']);
-    },
-    error: (err) => alert(err.error.detail || 'Error al iniciar sesión')
-    });
+        if (this.form.invalid) return;
+        const { email, password } = this.form.value;
+        this.auth.login(email!, password!).subscribe({
+            next: () => {
+                if (this.auth.isAdmin()) this.router.navigate(['/admin']);
+                else this.router.navigate(['/user']);
+            },
+            error: (err) => alert(err.error.detail || 'Error al iniciar sesión')
+        });
     }
 }

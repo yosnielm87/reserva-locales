@@ -1,4 +1,4 @@
-<div class="login-container">
+<!--div class="login-container">
   <h2>Iniciar Sesión</h2>
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <label>Email
@@ -10,4 +10,19 @@
     <button type="submit" [disabled]="form.invalid">Entrar</button>
   </form>
   <a routerLink="/register">¿No tienes cuenta? Regístrate</a>
+</div-->
+
+<div class="login-container" [ngClass]="{'inline': styleInline}">
+
+  <!-- título SOLO cuando NO estemos en línea -->
+  <h2 *ngIf="!styleInline">Iniciar Sesión</h2>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <input type="email"   formControlName="email"   placeholder="Email">
+    <input type="password" formControlName="password" placeholder="Contraseña">
+    <button type="submit" [disabled]="form.invalid">Entrar</button>
+  </form>
+
+  <!-- link registro SOLO cuando NO estemos en línea -->
+  <a *ngIf="!styleInline" routerLink="/register">¿No tienes cuenta? Regístrate</a>
 </div>

@@ -3,6 +3,7 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from uuid import UUID
 from .enums import ReservationStatus   # si quieres restringir valores
+from typing import Optional
 
 # ---------- AUTH ----------
 class UserCreate(BaseModel):
@@ -72,10 +73,25 @@ class ReservationWithLocaleOut(BaseModel):
 class TimeSlot(BaseModel):
     start_dt: datetime
     end_dt: datetime
+
+# Este esquema refleja la respuesta enriquecida que crea tu router
+class ReservationDisplay(TimeSlot):
+    # Campos heredados de TimeSlot: start_dt, end_dt
     
+    # Campos adicionales requeridos por el frontend y generados por el router
+    id: str # O UUID, dependiendo de cómo lo serialices en el router
+    status: str
+    user: str  # Email del usuario (obtenido del JOIN)
+    status_color: str # 'green', 'yellow', 'gray'
+
+    # Campos opcionales
+    locale_name: Optional[str] = None
+    display_text: Optional[str] = None
+
 # Esquema de Respuesta para la Disponibilidad
 class AvailabilityResponse(BaseModel):
     # Los horarios ocupados (reservas confirmadas o pendientes)
     occupied_slots: list[TimeSlot]
     # Los horarios que el local está abierto pero no reservado
     available_slots: list[TimeSlot]
+

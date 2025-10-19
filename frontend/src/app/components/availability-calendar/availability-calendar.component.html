@@ -1,37 +1,67 @@
-<div class="availability-calendar">
-    <h3>Disponibilidad del Local</h3>
+<div class="calendar-container">
+    <h2>Disponibilidad del Local</h2>
 
-    <div class="date-selector">
+    <!-- Control de Fecha -->
+    <div class="date-picker-container">
         <label for="date-input">Seleccionar Fecha:</label>
-        <!-- (ngModelChange) llama a la función onDateChange() para recargar la disponibilidad -->
-        <input type="date" id="date-input" [(ngModel)]="selectedDate" (ngModelChange)="onDateChange()">
+        <input 
+            type="date" 
+            [(ngModel)]="selectedDate" 
+            (change)="onDateChange()"
+            id="date-input"
+            [disabled]="loading"
+        >
     </div>
 
-    <div *ngIf="loading" class="loading-indicator">Cargando disponibilidad...</div>
+    <div *ngIf="loading" class="loading-message">Cargando disponibilidad...</div>
 
-    <div *ngIf="!loading && allSlots.length === 0" class="no-data">
-        No se encontró disponibilidad para la fecha seleccionada.
-    </div>
+    <div *ngIf="!loading && availability">
+        <h3>Horarios para el {{ selectedDate | date:'fullDate' }}</h3>
 
-    <div *ngIf="!loading && allSlots.length > 0" class="slots-container">
-        <h4>Horarios Ordenados:</h4>
-        <!-- Itera sobre todos los slots (disponibles y ocupados) -->
-        <div *ngFor="let slot of allSlots" 
-             class="slot-item" 
-             [class.available]="slot.type === 'available'" 
-             [class.occupied]="slot.type === 'occupied'">
-            
-            <div class="time-range">
-                {{ slot.start_dt | date:'shortTime' }} - {{ slot.end_dt | date:'shortTime' }}
+        <!-- Leyenda de Colores -->
+        <div class="color-legend">
+            <span class="legend-item">
+                <div class="color-box yellow-bg"></div> Pendiente (Amarillo)
+            </span>
+            <span class="legend-item">
+                <div class="color-box green-bg"></div> Aprobado (Verde)
+            </span>
+            <span class="legend-item">
+                <div class="color-box free-bg"></div> Disponible
+            </span>
+        </div>
+
+        <!-- Lista de Slots de Horario -->
+        <div class="time-slots-list">
+            <div *ngFor="let slot of allSlots" 
+                 class="slot-item"
+                 [ngClass]="getSlotBgClass(slot)">
+                
+                <div class="slot-time">
+                    <!-- Usamos DatePipe para formatear las horas de forma legible -->
+                    {{ slot.start_dt | date:'shortTime' }} - {{ slot.end_dt | date:'shortTime' }}
+                </div>
+
+                <div class="slot-status-details">
+                    <!-- Usamos el tipo para decidir qué mostrar -->
+                    <span *ngIf="slot.type === 'occupied'" 
+                          class="status-text"
+                          [style.borderLeftColor]="getSlotColor(slot)"> 
+                        
+                        <!-- Muestra Estado y Usuario -->
+                        {{ getSlotDetails(slot) }}
+                    </span>
+                    
+                    <span *ngIf="slot.type === 'available'" class="status-text status-free">
+                        LIBRE
+                    </span>
+                </div>
             </div>
-            
-            <div class="status">
-                <span *ngIf="slot.type === 'available'">LIBRE</span>
-                <!-- Llama a la función getSlotStatus del TS para obtener el estado de forma segura -->
-                <span *ngIf="slot.type === 'occupied'">
-                    OCUPADO ({{ getSlotStatus(slot) | uppercase }})
-                </span>
-            </div>
+        </div>
+        
+        <!-- Mensaje si no hay slots -->
+        <div *ngIf="allSlots.length === 0" class="no-slots-message">
+            No hay horarios de operación o reservas para la fecha seleccionada.
         </div>
     </div>
 </div>
