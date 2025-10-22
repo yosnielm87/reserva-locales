@@ -1,14 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-#from sqlalchemy.future import select, desc
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, func
+from sqlalchemy.orm import selectinload
 from datetime import datetime, time, timedelta
 # Asegúrate de que los modelos y esquemas están correctamente importados
-from ..models import Reservation, Locale, ReservationStatus 
+from ..models import Reservation, Locale, ReservationStatus, User 
 from ..schemas import ReservationCreate, ReservationOut
-# Asumo que get_async_session reemplaza async_session en las dependencias
 from ..dependencies import get_current_user, get_async_session 
-# from ..database import async_session 
+# Asumo que tienes un esquema para la salida del historial que incluye nombre de usuario y local.
+# Si no lo tienes, usa ReservationOut y lo mapearemos después. Para este ejemplo, usaré un esquema nuevo simple.
+
+# ⚠️ NOTA: Deberías definir un nuevo esquema de salida en schemas.py para incluir
+# los campos de relación (Locale.name y User.full_name) que pediste en Angular.
+# Por simplicidad, usaremos un diccionario como tipo de respuesta aquí.
 
 router = APIRouter(
     # prefix="/reservations",
@@ -92,8 +96,6 @@ async def create_reservation(
 # 📚 OBTENER MIS RESERVAS
 # ====================================================================
 
-from datetime import datetime
-
 @router.get("/my", response_model=list[ReservationOut])
 async def my_reservations(
     current_user=Depends(get_current_user),
@@ -155,3 +157,4 @@ async def cancel_reservation(
 
     # 204 No Content → Angular no espera cuerpo
     return None
+

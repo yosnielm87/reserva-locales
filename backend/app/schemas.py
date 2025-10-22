@@ -1,6 +1,6 @@
 #backend/app/schemas.py
 from pydantic import BaseModel, EmailStr
-from datetime import datetime
+from datetime import datetime, time
 from uuid import UUID
 from .enums import ReservationStatus   # si quieres restringir valores
 from typing import Optional
@@ -17,18 +17,18 @@ class Token(BaseModel):
 
 # ---------- LOCALES ----------
 class LocaleOut(BaseModel):
-    id: UUID
+    id: str
     name: str
     description: str
     capacity: int
     location: str
-    open_time: str
-    close_time: str
-    active: bool
-    imagen_url: str
+    open_time: str          # ← string, no time
+    close_time: str         # ← string, no time
+    imagen_url: str         # ← imagen_url, no imagen
 
     class Config:
-        from_attributes = True   # V2 (ex-orm_mode)
+        orm_mode = True
+        json_encoders = {time: lambda v: v.strftime("%H:%M")}
 
 # ---------- RESERVAS ----------
 class ReservationCreate(BaseModel):

@@ -1,17 +1,302 @@
-header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-padding: 10px 20px;
-background: #f5f5f5;
+/* --- Base Dashboard & Layout --- */
+
+.dashboard {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
 }
-.conflict-card {
-border: 1px solid #ddd;
-border-radius: 6px;
-padding: 12px;
-margin: 10px 0;
+
+/* --- Tabs --- */
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eeeeee;
+    padding-bottom: 10px;
 }
-.actions button {
-margin-right: 8px;
-padding: 6px 12px;
+
+.tabs button {
+    padding: 10px 15px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    color: #555555;
+    transition: all 0.3s ease;
+    border-radius: 8px 8px 0 0;
+}
+
+.tabs button:hover {
+    color: #007bff;
+}
+
+.tabs button.active {
+    color: #007bff;
+    border-bottom: 3px solid #007bff;
+}
+
+.tab-content {
+    padding: 10px 0;
+}
+
+h2 {
+    color: #333333;
+    border-left: 5px solid #007bff;
+    padding-left: 10px;
+    margin-bottom: 20px;
+}
+
+/* --- Empty State --- */
+
+.empty {
+    padding: 20px;
+    text-align: center;
+    background-color: #f0f8ff;
+    border: 1px solid #cceeff;
+    border-radius: 8px;
+    color: #007bff;
+    font-weight: 500;
+}
+
+/* --- Card Styles (Reservations & Locales) --- */
+
+.reservation-card, .locale-card {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.reservation-card img, .locale-card img {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-right: 15px;
+    border: 1px solid #ddd;
+}
+
+.info {
+    flex-grow: 1;
+}
+
+.info strong {
+    font-size: 1.1em;
+    color: #333;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.info p {
+    font-size: 0.9em;
+    color: #666;
+    margin: 2px 0;
+}
+
+/* --- Status Badges --- */
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: 700;
+    margin-top: 5px;
+    color: #fff;
+}
+
+.pending {
+    background-color: #ff9800; /* Naranja */
+}
+.approved {
+    background-color: #4CAF50; /* Verde */
+}
+.rejected {
+    background-color: #F44336; /* Rojo */
+}
+.cancelled {
+    background-color: #607D8B; /* Gris/Azul */
+}
+
+/* --- Admin Actions --- */
+
+.admin-card .actions {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+    align-items: center;
+}
+
+.admin-card .actions button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.approve-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+.approve-btn:hover {
+    background-color: #45a049;
+}
+
+.reject-btn {
+    background-color: #F44336;
+    color: white;
+}
+.reject-btn:hover {
+    background-color: #e53935;
+}
+
+/* --- Local Management Actions --- */
+
+.add-locale-btn {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-bottom: 20px;
+    transition: background-color 0.2s ease;
+}
+.add-locale-btn:hover {
+    background-color: #0056b3;
+}
+
+.admin-local-card .actions {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+}
+
+.edit-btn, .delete-btn {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #fff;
+    transition: background-color 0.2s ease;
+}
+
+.edit-btn:hover {
+    background-color: #ffeb3b;
+}
+.delete-btn {
+    color: #F44336;
+    border-color: #F44336;
+}
+.delete-btn:hover {
+    background-color: #ffebee;
+}
+
+/* --- Filtro de Historial (NUEVOS ESTILOS) --- */
+
+.filter-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 20px;
+    background: #f0f0f5;
+    border-radius: 8px;
+    /* Permite que los elementos se envuelvan en pantallas pequeñas */
+    flex-wrap: wrap; 
+}
+
+.filter-controls label {
+    font-weight: 500;
+    color: #333;
+}
+
+.filter-controls input[type="date"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    flex: 1; /* Ocupa el espacio disponible */
+    min-width: 120px;
+}
+
+.filter-controls button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.search-btn {
+    background-color: #007bff;
+    color: white;
+}
+.search-btn:hover {
+    background-color: #0056b3;
+}
+
+.clear-btn {
+    background-color: #e0e0e0;
+    color: #333;
+}
+.clear-btn:hover {
+    background-color: #cccccc;
+}
+
+/* --- Media Queries for Responsiveness --- */
+@media (max-width: 600px) {
+    .dashboard {
+        padding: 10px;
+    }
+
+    .tabs {
+        flex-wrap: wrap;
+    }
+
+    .reservation-card, .locale-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .reservation-card img, .locale-card img {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+
+    .admin-card .actions {
+        margin-top: 10px;
+        margin-left: 0;
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .admin-card .actions button {
+        flex: 1;
+    }
+
+    /* Estilos responsivos específicos para el filtro */
+    .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-controls input[type="date"],
+    .filter-controls button {
+        width: 100%;
+        margin-top: 5px;
+    }
 }

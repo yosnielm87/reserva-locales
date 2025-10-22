@@ -1,37 +1,130 @@
-<header>
-  <h1>Panel de Administrador</h1>
-  <!--p>Bienvenido, {{ (user$ | async)?.full_name || 'Admin' }}</p>
-  <button (click)="logout()">Cerrar sesión</button-->
-</header>
+<div class="dashboard">
+    <!-- Tabs y Botón de Salida -->
+    <nav class="tabs">
+        <button [class.active]="activeTab === 'pending'"
+                (click)="activeTab = 'pending'">Reservas Pendientes</button>
+        <button [class.active]="activeTab === 'history'"
+                (click)="activeTab = 'history'">Historial de Reservas</button>
+        <button [class.active]="activeTab === 'locales'"
+                (click)="activeTab = 'locales'">Gestión de Locales</button>
+        <!--button (click)="logout()" class="ml-auto">Cerrar Sesión</button-->
+    </nav>
 
-<section>
-  <h2>Reservas pendientes</h2>
+    <!-- Contenido -->
+    <div class="tab-content">
 
-  <table *ngIf="pending$ | async as list; else noPending">
-    <thead>
-      <tr>
-        <th>Local</th>
-        <th>Inicio</th>
-        <th>Fin</th>
-        <th>Motivo</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let r of list">
-        <td>{{ r.locale_name }}</td>
-        <td>{{ r.start_dt | date:'short' }}</td>
-        <td>{{ r.end_dt | date:'short' }}</td>
-        <td>{{ r.motive }}</td>
-        <td>
-          <button (click)="approve(r)">Aprobar</button>
-          <button (click)="reject(r)">Rechazar</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+        <!-- 1. RESERVAS PENDIENTES -->
+        <div *ngIf="activeTab === 'pending'" class="tab-panel">
+            <h2>Reservas Pendientes de Aprobación</h2>
 
-  <ng-template #noPending>
-    <p>No hay reservas pendientes.</p>
-  </ng-template>
-</section>
+            <ng-container *ngIf="pending$ | async as pendingList">
+                <div *ngIf="pendingList.length === 0" class="empty">
+                    🎉 No hay reservas pendientes. ¡Todo al día!
+                </div>
+                
+                <div class="reservation-card admin-card"
+                     *ngFor="let r of pendingList">
+                     
+                    <img [src]="r.locale.imagen_url"
+                        [alt]="r.locale.name"
+                        onerror="this.src='/assets/img/no-image.jpg'">
+                    
+                    <div class="info">
+                        <strong>{{ r.locale.name }}</strong>
+                        <p>{{ r.start_dt | date:'short' }} - {{ r.end_dt | date:'shortTime' }}</p>
+                        <p><strong>Usuario:</strong> {{ r.userName }} ({{ r.userEmail }})</p>
+                        <p>Motivo: {{ r.motive }}</p>
+                        <p>{{ r.start_dt | date:'shortDate' }} ·
+                            {{ r.start_dt | date:'shortTime' }} -
+                            {{ r.end_dt | date:'shortTime' }}</p>
+                        
+                        <span class="status-badge pending">
+                            {{ r.status | uppercase }}
+                        </span>
+
+                    </div>
+                    
+                    <div class="actions">
+                        <button (click)="approve(r)" class="approve-btn">Aprobar</button>
+                        <button (click)="reject(r)" class="reject-btn">Rechazar</button>
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+
+        <!-- 2. HISTORIAL DE RESERVAS -->
+        <div *ngIf="activeTab === 'history'" class="tab-panel">
+            <h2>Historial Completo</h2>
+
+            <!-- CONTROLES DE FILTRO -->
+            <div class="filter-controls">
+                <label for="start-date">Desde:</label>
+                <input id="start-date" type="date" [(ngModel)]="startDate">
+
+                <label for="end-date">Hasta:</label>
+                <input id="end-date" type="date" [(ngModel)]="endDate">
+
+                <button (click)="searchHistory()" class="search-btn">
+                    Buscar Reservas
+                </button>
+                <button (click)="startDate = ''; endDate = ''; searchHistory()" class="clear-btn">
+                    Limpiar Filtro
+                </button>
+            </div>
+            <!-- FIN CONTROLES DE FILTRO -->
+
+            <ng-container *ngIf="history$ | async as historyList">
+                <div *ngIf="historyList.length === 0" class="empty">
+                    No hay registros de reservas en el historial para los filtros seleccionados.
+                </div>
+
+                <div class="reservation-card"
+                     *ngFor="let r of historyList">
+                    
+                    <img [src]="r.locale.imagen_url"
+                        [alt]="r.locale.name"
+                        onerror="this.src='/assets/img/no-image.jpg'">
+                    
+                    <div class="info">
+                        <strong>{{ r.locale.name }}</strong>
+                        <p>{{ r.start_dt | date:'short' }} - {{ r.end_dt | date:'shortTime' }}</p>
+                        <p><strong>Usuario:</strong> {{ r.userName }} ({{ r.userEmail }})</p>
+                        <p><strong>Motivo:</strong> {{ r.motive }}</p>
+                        <span class="status-badge"
+                            [class.approved]="r.status === 'approved'"
+                            [class.cancelled]="r.status === 'cancelled'">
+                        {{ r.status | uppercase }}
+                        </span>
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+
+        <!-- 3. GESTIÓN DE LOCALES -->
+        <div *ngIf="activeTab === 'locales'" class="tab-panel">
+            <h2>Gestión de Locales</h2>
+            <p>Aquí podrá añadir, editar o eliminar locales.</p>
+            
+            <button (click)="addLocale()" class="add-locale-btn">
+                + Añadir Nuevo Local
+            </button>
+            
+            <ng-container *ngIf="locales$ | async as localesList">
+                <div *ngFor="let l of localesList" class="locale-card admin-local-card">
+                    <img [src]="l.imagen_url" [alt]="l.name"
+                         onerror="this.src='https://placehold.co/120x100/9e9e9e/ffffff?text=Local'">
+                    <div class="info">
+                        <strong>{{ l.name }}</strong>
+                        <p>{{ l.description }}</p>
+                        <p>Capacidad: {{ l.capacity }}</p>
+                    </div>
+                    
+                    <div class="actions">
+                        <button (click)="editLocale(l.id)" class="edit-btn">Editar</button>
+                        <button (click)="deleteLocale(l.id)" class="delete-btn">Eliminar</button>
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+    </div>
+</div>

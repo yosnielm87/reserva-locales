@@ -21,3 +21,26 @@ export interface ReservationOut {
 export interface ReservationWithLocale extends ReservationOut {
   locale_name: string;
 }
+
+export interface LocaleListItem {
+    id: string;
+    name: string;
+    description: string;
+    capacity: number;
+    imagen_url: string; // Asumimos que esta URL existe para la imagen del local
+}
+
+export interface ReservationFull {
+  id: string;
+  start_dt: string;
+  end_dt: string;
+  status: string;
+  motive: string;
+  userName: string;
+  userEmail: string;
+  locale: {
+    id: string;
+    name: string;
+    imagen_url: string;
+  };
+}

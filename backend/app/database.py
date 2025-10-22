@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from sqlalchemy.pool import Pool 
 from sqlalchemy import event, DDL 
 
-# Asumo que la importación de UserRole es correcta y la dejo aquí
 # Si UserRole no es necesario en database.py, puedes borrar esta línea.
 from .enums import UserRole 
 
@@ -55,3 +54,7 @@ def register_enum_types_sync(dbapi_connection, connection_record):
         decoder=UserRole, 
         format='text'
     )
+
+async def get_async_session() -> AsyncSession:
+    async with async_session() as session:
+        yield session

@@ -26,18 +26,20 @@ async def get_async_session():
 
 @router.get("/", response_model=list[LocaleOut])
 async def list_locales(session: AsyncSession = Depends(get_async_session)):
-    res = await session.execute(select(Locale).where(Locale.active == True))
-    db_rows = res.scalars().all()
+    rows = (await session.execute(select(Locale).order_by(Locale.name))).scalars().all()
 
     return [
-        {
-            **row.__dict__,
-            # Asumo que los campos open_time y close_time son objetos time o string que necesitan formato
-            "open_time": row.open_time.strftime("%H:%M") if isinstance(row.open_time, time) else str(row.open_time),
-            "close_time": row.close_time.strftime("%H:%M") if isinstance(row.close_time, time) else str(row.close_time),
-            "imagen_url": f"/assets/locales/{row.imagen}"
-        }
-        for row in db_rows
+        LocaleOut(
+            id=str(r.id),                    # ← UUID → string
+            name=r.name,
+            description=r.description,
+            capacity=r.capacity,
+            location=r.location,
+            open_time=r.open_time.strftime("%H:%M"),
+            close_time=r.close_time.strftime("%H:%M"),
+            imagen_url=f"/assets/locales/{r.imagen}" if r.imagen else "/assets/img/no-image.jpg"
+        )
+        for r in rows
     ]
 
 @router.get("/{locale_id}", response_model=LocaleOut)
